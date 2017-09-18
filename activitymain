@@ -1,0 +1,248 @@
+package com.torres.edgar.bircomputehint;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.TextView;
+import java.util.ArrayList;
+import java.util.List;
+public class MainActivity extends AppCompatActivity {
+
+    public double over[][][]={{{1.00,4167.00,5000.00,6667.00,10000.00,15833.00,25000.00,45833.00},
+                            {1.00,6250.00,7083.00,8750.00,12083.00,17917.00,27083.00,47917.00},
+                         {1.00,8333.00,9167.00,10833.00,14137.00,20000.00,29167.00,50000.00},
+            {1.00,10417.00,11250.00,12917.00,16250.00,22083.00,31250.00,52083.00},
+    {1.00,12500.00,13333.00,15000.00,18333.00,24167.00,33333.00,54167.00}
+
+    },
+    {{1.00,2083.00,2500.00,3333.00,5000.00,7917.00,12500.00,22917.00},
+        {1.00,3125.00,3542.00,4375.00,6042.00,8958.00,13542.00,23958.00},
+        {1.00,4167.00,4583.00,5417.00,7083.00,10000.00,14583.00,25000.00},
+        {1.00,5208.00,5625.00,6458.00,8125.00,11402.00,15625.00,26042.00},
+        {1.00,6250.00,6667.00,7500.00,9167.00,12083.00,16667.00,27083.00}
+    }};
+    public double pagibig[]={50.00,100.00};
+    public double philhealth[][]={{8000.00,100.00},{9000.00,112.00},{10000.00,125.00},{11000.00,137.50},
+            {12000.00,150.00},{13000.00,162.50},{14000.00,175.00},{15000.00,187.50},{16000.00,200.00},
+            {17000.00,212.50},{18000.00,225.00},{19000.00,237.50},{20000.00,250.00},{21000.00,262.50},
+            {22000.00,275.00},{23000.00,287.50},{24000.00,300.00},{25000.00,312.50},{26000.00,325.00},
+            {27000.00,337.50},{28000.00,350.00},{29000.00,362.50},{30000.00,375.00},{31000.00,387.50},
+            {32000.00,400.00},{33000.00,412.50},{34000.00,425.00},{35000.00,437.50}};
+    public double sss[][]={{1000.00,36.50},{1250.00,54.50},{1750.00,72.70},{2250.00,90.80},{2750.00,109.00},
+            {3250.00,127.20},{3750.00,145.30},{4250.00,163.50},{4750.00,181.70},{5250.00,199.80},{5750.00,218.00},
+            {6250.00,236.20},{6750.00,254.30},{7250.00,272.50},{7750.00,290.70},{8250.00,308.80},{8750.00,327.00},
+            {9250.00,345.20},{9750.00,363.30},{10250.00,381.50},{10750.00,399.70},{11250.00,417.80},{11750.00,436.00},
+            {12250.00,454.20},{12750.00,472.30},{13250.00,490.50},{13750.00,508.70},{14250.00,526.80},{14750.00,545.00},
+            {15250.00,563.20},{15750.00,581.30}};
+    public double addtnl[][]={{0.00,0.00,41.67,208.33,708.33,1875.00,4166.67,10416.67},
+            {0.00,0.00,20.83,104.17,354.17,937.50,2083.33,5208.33}};
+    public double percent[]={0.00,5.00,10.00,15.00,20.00,25.00,30.00,32.00};
+    public Spinner spinStatus,spinPeriod;
+    public String status []={"Single/Married","Single/Married (1)Dependent","Single/Married (2)Dependent",
+                         "Single/Married (3)Dependent","Single/Married (4)Dependent"};
+    public String period[]={"Monthly","Semi-Monthly"};
+    public int incomebracket=0, selectedstatus =0,selectedperiod=0;
+    public EditText txtTaxableIncome,txtGrossIncome;
+    public Double taxableincome,grossincome;
+    public TextView txtFirst,txtPercent,txtOver,txtSSS,txtPagibig,txtPhil;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        txtGrossIncome=(EditText)findViewById(R.id.textGrossIncome);
+        txtSSS=(TextView)findViewById(R.id.textSSS);
+        txtPagibig=(TextView)findViewById(R.id.textPagibig);
+        txtPhil=(TextView)findViewById(R.id.textPhilHealth);
+        txtTaxableIncome=(EditText) findViewById(R.id.texttaxIncome);
+        txtFirst=(TextView) findViewById(R.id.textFirst);
+        txtPercent=(TextView) findViewById(R.id.textPercent);
+        txtOver=(TextView) findViewById(R.id.textOver);
+        populateSpinner();//put item on taxpayer status (Single/Married and the likes and Payroll Period Monthly or Semi Monthly)
+        selectPeriod();//build the event handler everytime you change from Monthly to Semi monthly or vice versa
+        selectStatus();//build the event handler everytime time there is a change in Taxpayer Status
+        addtextwatcherTaxableIncome();//build the vent handler everytime taxable income was changed
+        watcherngincome();
+    }
+    private void selectPeriod() {
+
+        spinPeriod.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+
+                selectedperiod=i;
+                computewtax();
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+    }
+    private void addtextwatcherTaxableIncome() {
+
+        txtTaxableIncome.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (txtTaxableIncome.getText()==null) {
+                    txtTaxableIncome.setError("Wromg Taxable Income");
+                } else {
+                    computewtax();
+                }
+            }
+        });
+
+    }
+    private void watcherngincome(){
+        txtGrossIncome.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (txtGrossIncome.getText()==null) {
+                   txtGrossIncome.setError("Wromg Gross Income");
+                } else {
+                    computegross();
+                }
+            }
+        });
+
+    }
+
+
+    private void selectStatus() {
+        spinStatus.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                selectedstatus =i;
+                computewtax();
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+            }
+        });
+    }
+
+    private void computewtax(){
+
+        try {
+            taxableincome=Double.parseDouble(txtTaxableIncome.getText().toString());
+        } catch (NumberFormatException e) {
+            taxableincome=0.00;
+        }
+        incomebracket= getincomebracket(taxableincome, selectedstatus,selectedperiod);
+        txtOver.setText(""+ addtnl[selectedperiod][incomebracket]+" plus  "+ percent[incomebracket]+
+                " %  over "+ over[selectedperiod][selectedstatus][incomebracket]);
+    }
+    private void computegross(){
+        try {
+           grossincome=Double.parseDouble(txtGrossIncome.getText().toString());
+        } catch (NumberFormatException e) {
+            grossincome=0.00;
+        }
+        incomebracket= getincomebracket2(grossincome, selectedstatus,selectedperiod);
+        txtSSS.setText("" + sss[selectedperiod][selectedstatus]);
+        txtPagibig.setText(""+ pagibig[selectedperiod]);
+        txtPhil.setText(""+ philhealth[selectedperiod][selectedstatus]);
+    }
+
+    private int getincomebracket(double income, int status, int period) {
+
+        int klas=0;
+
+        int x=7,cntr=0;
+        do
+        {
+
+            if (income==0.00)//default value if income is 0 since it is not part of the income bracket
+            {
+                klas=0;
+                break;
+            }
+            if (income>= over[period][status][cntr] && income< over[period][status][cntr+1]) {
+                klas = cntr;
+               break;
+            }
+            else
+                cntr++;
+        }
+                while (cntr<7);
+        if (cntr==7){//income nracket because all search has been done
+            klas=7;
+        }
+        return klas;
+    };
+    private int getincomebracket2(double income, int status, int period) {
+
+        int klas=0;
+
+        int x=7,cntr=0;
+        do
+        {
+
+            if (income==0.00)//default value if income is 0 since it is not part of the income bracket
+            {
+                klas=0;
+                break;
+            }
+            if (income>= over[period][status][cntr] && income< over[period][status][cntr+1]) {
+                klas = cntr;
+                break;
+            }
+            else
+                cntr++;
+        }
+        while (cntr<7);
+        if (cntr==7){//income nracket because all search has been done
+            klas=7;
+        }
+        return klas;
+    };
+
+
+    private void populateSpinner() {
+        spinStatus=(Spinner)findViewById(R.id.spinnerStatus);
+        List<String> listStatus = new ArrayList<String>();
+        for (int x=0;x<status.length;x++) {
+            listStatus.add(status[x]);
+        }
+        ArrayAdapter<String> dataAdapterStatus = new ArrayAdapter<String>(this,
+                R.layout.spinner_item, listStatus);
+        dataAdapterStatus.setDropDownViewResource(R.layout.spinner_item_dropdown);
+        spinStatus.setAdapter(dataAdapterStatus);
+        spinStatus.setPrompt("Exemption Status");
+
+        spinPeriod = (Spinner)findViewById(R.id.spinnerPeriod);
+        List<String> listPeriod = new ArrayList<String>();
+        for (int x=0;x<period.length;x++) {
+            listPeriod.add(period[x]);
+        }
+        ArrayAdapter<String> dataAdapterPeriod = new ArrayAdapter<String>(this,
+                R.layout.spinner_item, listPeriod);
+        dataAdapterPeriod.setDropDownViewResource(R.layout.spinner_item_dropdown);
+        spinPeriod.setAdapter(dataAdapterPeriod);
+        spinPeriod.setPrompt("Pay Period ");
+
+    }
+}
